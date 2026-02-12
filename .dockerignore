@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+.git
+.gitignore
+.env
+.env.local
+README.md
+.vscode
+.idea
+*.swp
+*.swo
+node_modules
+npm-debug.log
+.DS_Store
+uploads

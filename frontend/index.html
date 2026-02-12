@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcriptor de Áudio</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border: 2px dashed #667eea;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upload-section:hover {
+            background: #f0f1ff;
+            border-color: #764ba2;
+        }
+
+        .upload-section.dragover {
+            background: #e8e9ff;
+            border-color: #764ba2;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .upload-section h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-section p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: transform 0.2s;
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .file-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-info p {
+            color: #666;
+            font-size: 0.95em;
+            padding: 5px 0;
+        }
+
+        .file-info strong {
+            color: #333;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading p {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .progress-container {
+            margin: 20px 0;
+        }
+
+        .progress-bar-background {
+            background: #e9ecef;
+            border-radius: 10px;
+            height: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #667eea;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .results-section {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results-section.show {
+            display: block;
+        }
+
+        .metadata {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .metadata-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .metadata-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+
+        .metadata-item label {
+            color: #667eea;
+            font-weight: bold;
+            font-size: 0.9em;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .metadata-item value {
+            color: #333;
+            font-size: 1em;
+        }
+
+        .transcription-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #764ba2;
+            margin-bottom: 20px;
+        }
+
+        .transcription-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .transcription-text {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-size: 0.95em;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.3s;
+        }
+
+        .btn-copy {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-copy:hover {
+            background: #5568d3;
+        }
+
+        .btn-download {
+            background: #764ba2;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #653a8a;
+        }
+
+        .btn-restart {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-restart:hover {
+            background: #5a6268;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #f5c6cb;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #c3e6cb;
+            display: none;
+            margin-bottom: 20px;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .timestamp {
+            color: #999;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ Transcriptor de Áudio</h1>
+            <p>Converta seus arquivos de áudio em texto com precisão</p>
+        </div>
+
+        <div class="content">
+            <!-- Mensagens de Erro -->
+            <div id="errorMessage" class="error"></div>
+
+            <!-- Mensagem de Sucesso -->
+            <div id="successMessage" class="success-message"></div>
+
+            <!-- Seção de Upload -->
+            <div id="uploadSection" class="upload-section">
+                <div class="upload-icon">📁</div>
+                <h3>Clique ou arraste seu arquivo de áudio</h3>
+                <p>Formatos suportados: MP3, WAV, FLAC, M4A, OGG</p>
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    Selecionar Arquivo
+                </button>
+                <input type="file" id="fileInput" accept="audio/*">
+            </div>
+
+            <!-- Informações do Arquivo -->
+            <div id="fileInfo" class="file-info">
+                <p><strong>Arquivo:</strong> <span id="fileName"></span></p>
+                <p><strong>Tamanho:</strong> <span id="fileSize"></span></p>
+            </div>
+
+            <!-- Loading -->
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Processando áudio... isso pode levar alguns segundos...</p>
+                <div class="progress-container">
+                    <div class="progress-bar-background">
+                        <div id="progressBar" class="progress-bar-fill"></div>
+                    </div>
+                    <div class="progress-text"><span id="progressPercent">0</span>%</div>
+                </div>
+            </div>
+
+            <!-- Resultados -->
+            <div id="resultsSection" class="results-section">
+                <!-- Metadados -->
+                <div class="metadata">
+                    <h3 style="color: #333; margin-bottom: 15px;">📊 Metadados do Áudio</h3>
+                    <div class="metadata-grid">
+                        <div class="metadata-item">
+                            <label>Título do Áudio</label>
+                            <div id="metaTitle" style="color: #333;"></div>
+                        </div>
+                        <div class="metadata-item">
+                            <label>Artista</label>
+                            <div id="metaArtist" style="color: #333;"></div>
+                        </div>
+                        <div class="metadata-item">
+                            <label>Duração</label>
+                            <div id="metaDuration" style="color: #333;"></div>
+                        </div>
+                        <div class="metadata-item">
+                            <label>Formato</label>
+                            <div id="metaFormat" style="color: #333;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transcrição -->
+                <div class="transcription-box">
+                    <h3>📝 Transcrição</h3>
+                    <div class="transcription-text" id="transcriptionText"></div>
+                    <div class="action-buttons">
+                        <button class="btn btn-copy" onclick="copyToClipboard()">📋 Copiar Texto</button>
+                        <button class="btn btn-download" onclick="downloadTranscription()">💾 Download TXT</button>
+                        <a id="downloadFileBtn" class="btn btn-download" style="display:none; text-decoration:none;">📄 Baixar Arquivo</a>
+                        <button class="btn btn-restart" onclick="resetForm()">🔄 Novo Arquivo</button>
+                    </div>
+                    <div class="timestamp">
+                        <p>Processado em: <span id="timestamp"></span></p>
+                        <p>Modelo: <span id="modelName">Whisper (Offline)</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInfo = document.getElementById('fileInfo');
+        const loading = document.getElementById('loading');
+        const resultsSection = document.getElementById('resultsSection');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        let currentTranscription = '';
+
+        // Drag and drop
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect();
+            }
+        });
+
+        // File input change
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleFileSelect() {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            // Mostrar informações do arquivo
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+            fileInfo.classList.add('show');
+
+            // Esconder erros anteriores
+            hideError();
+            hideSuccess();
+
+            // Enviar arquivo para transcrição
+            transcribeAudio(file);
+        }
+
+        async function transcribeAudio(file) {
+            loading.classList.add('show');
+            uploadSection.style.display = 'none';
+            resultsSection.classList.remove('show');
+            updateProgress(0);
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            let progressInterval;
+            let timeoutHandle;
+            
+            // Timeout de 40 minutos para arquivos muito grandes (segurança)
+            const timeoutMax = 40 * 60 * 1000;
+            const startTime = Date.now();
+            
+            try {
+                // Reset progress no backend ANTES de enviar
+                console.log('Resetando progresso no backend...');
+                await fetch('http://localhost:8000/reset-progress', { method: 'POST' });
+                
+                // Breve delay para garantir que o reset foi processado
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Fazer requisição de transcrição (retorna 202 Accepted)
+                console.log('Enviando arquivo para transcrição...');
+                const response = await fetch('http://localhost:8000/transcribe', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || `Erro HTTP ${response.status}`);
+                }
+                
+                console.log('Arquivo enviado com sucesso. Iniciando polling...');
+
+                // Iniciar polling do progresso com retry
+                let pollAttempt = 0;
+                let lastStatus = '';
+                
+                progressInterval = setInterval(async () => {
+                    const elapsed = Date.now() - startTime;
+                    
+                    // Verificar timeout
+                    if (elapsed > timeoutMax) {
+                        clearInterval(progressInterval);
+                        showError(`Timeout: Arquivo muito grande (máximo 40 minutos). Tempo decorrido: ${Math.round(elapsed/1000/60)} minutos.`);
+                        loading.classList.remove('show');
+                        return;
+                    }
+                    
+                    try {
+                        pollAttempt++;
+                        const progressRes = await fetch('http://localhost:8000/progress');
+                        
+                        if (!progressRes.ok) {
+                            console.warn(`Erro ao buscar progresso: HTTP ${progressRes.status}`);
+                            return;
+                        }
+                        
+                        const progressData = await progressRes.json();
+                        
+                        // Log apenas quando status mudar
+                        if (progressData.status !== lastStatus) {
+                            console.log(`[Poll #${pollAttempt}] Status: ${progressData.status}, Progresso: ${progressData.percent}%`);
+                            lastStatus = progressData.status;
+                        }
+                        
+                        // Atualizar barra de progresso
+                        updateProgress(progressData.percent);
+                        
+                        // Se erro ocorreu
+                        if (progressData.status === 'error') {
+                            clearInterval(progressInterval);
+                            console.error('Erro no processamento:', progressData.error);
+                            throw new Error(progressData.error || 'Erro desconhecido no processamento');
+                        }
+                        
+                        // Se processamento completou
+                        if (progressData.status === 'completed') {
+                            if (progressData.result) {
+                                console.log('✓ Resultado recebido com sucesso!');
+                                clearInterval(progressInterval);
+                                displayResults(progressData.result);
+                            } else {
+                                console.warn('Status completed mas resultado ainda não disponível, aguardando...');
+                            }
+                        }
+                    } catch (e) {
+                        console.warn(`Erro no poll #${pollAttempt}:`, e.message);
+                    }
+                }, 500);  // Atualizar a cada 500ms
+                
+            } catch (error) {
+                if (progressInterval) clearInterval(progressInterval);
+                console.error('Erro fatal:', error);
+                showError('Erro: ' + error.message);
+                loading.classList.remove('show');
+            }
+        }
+
+        function updateProgress(percent) {
+            const progressBar = document.getElementById('progressBar');
+            const progressPercent = document.getElementById('progressPercent');
+            progressPercent.textContent = Math.min(100, Math.floor(percent));
+            progressBar.style.width = Math.min(100, Math.floor(percent)) + '%';
+        }
+
+        function displayResults(result) {
+            // Metadata
+            document.getElementById('metaTitle').textContent = result.metadata.title;
+            document.getElementById('metaArtist').textContent = result.metadata.artist;
+            document.getElementById('metaDuration').textContent = result.metadata.duration;
+            document.getElementById('metaFormat').textContent = result.metadata.format;
+
+            // Transcription
+            currentTranscription = result.transcription;
+            document.getElementById('transcriptionText').textContent = currentTranscription;
+
+            // Timestamp
+            const date = new Date(result.timestamp);
+            document.getElementById('timestamp').textContent = date.toLocaleString('pt-BR');
+            
+            // Model name
+            if (result.model) {
+                document.getElementById('modelName').textContent = result.model;
+            }
+            
+            // Download file link
+            if (result.download_file) {
+                const downloadBtn = document.getElementById('downloadFileBtn');
+                if (downloadBtn) {
+                    downloadBtn.href = `http://localhost:8000/download/${result.download_file}`;
+                    downloadBtn.style.display = 'inline-block';
+                }
+            }
+
+            // Show results
+            resultsSection.classList.add('show');
+            showSuccess('Transcrição realizada com sucesso!');
+            loading.classList.remove('show');
+        }
+
+        function copyToClipboard() {
+            navigator.clipboard.writeText(currentTranscription).then(() => {
+                showSuccess('✓ Texto copiado para a área de transferência!');
+            });
+        }
+
+        function downloadTranscription() {
+            const element = document.createElement('a');
+            const file = new Blob([currentTranscription], {type: 'text/plain'});
+            element.href = URL.createObjectURL(file);
+            element.download = 'transcricao_' + new Date().getTime() + '.txt';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+            showSuccess('✓ Arquivo baixado com sucesso!');
+        }
+
+        function resetForm() {
+            fileInput.value = '';
+            fileInfo.classList.remove('show');
+            resultsSection.classList.remove('show');
+            uploadSection.style.display = 'block';
+            hideError();
+            hideSuccess();
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('show');
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.classList.add('show');
+            setTimeout(hideSuccess, 3000);
+        }
+
+        function hideSuccess() {
+            successMessage.classList.remove('show');
+        }
+    </script>
+</body>
+</html>
