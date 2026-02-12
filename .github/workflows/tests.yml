@@ -1,0 +1,142 @@
+name: 🧪 Testes Automatizados
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+    - name: 📥 Clonar repositório
+      uses: actions/checkout@v3
+    
+    - name: 🐍 Configurar Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: 📦 Instalar dependências do sistema
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+    
+    - name: 📦 Instalar dependências Python
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+    
+    - name: 🧪 Rodar testes
+      run: |
+        pytest backend/test_main.py -v --tb=short
+    
+    - name: 📊 Gerar cobertura
+      run: |
+        pytest backend/test_main.py \
+          --cov=backend \
+          --cov-report=xml \
+          --cov-report=term-missing
+    
+    - name: 📈 Upload cobertura para Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Clonar repositório
+      uses: actions/checkout@v3
+    
+    - name: 🐍 Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+        cache: 'pip'
+    
+    - name: 📦 Instalar dependências
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black mypy
+        pip install -r backend/requirements.txt
+    
+    - name: 🔍 Executar flake8
+      run: |
+        flake8 backend/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 backend/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      continue-on-error: true
+    
+    - name: 🔧 Verificar formatação Black
+      run: black --check backend/
+      continue-on-error: true
+
+  build-docker:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Clonar repositório
+      uses: actions/checkout@v3
+    
+    - name: 🐳 Configurar Docker Buildx
+      uses: docker/setup-buildx-action@v2
+    
+    - name: 🔨 Build imagem Docker
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: false
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  security:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Clonar repositório
+      uses: actions/checkout@v3
+    
+    - name: 🔒 Executar Trivy scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+      continue-on-error: true
+    
+    - name: 📤 Upload Trivy para GitHub Security
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+      continue-on-error: true
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: [test, lint]
+    if: always()
+    
+    steps:
+    - name: ✅ Teste passou
+      if: needs.test.result == 'success'
+      run: echo "✅ Todos os testes passaram!"
+    
+    - name: ❌ Teste falhou
+      if: needs.test.result == 'failure'
+      run: echo "❌ Alguns testes falharam"
+    
+    - name: ⚠️ Lint alertas
+      if: needs.lint.result == 'failure'
+      run: echo "⚠️ Problemas encontrados no lint"
