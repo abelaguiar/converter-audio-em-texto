@@ -15,7 +15,12 @@ import time
 import threading
 
 # Configuração
-UPLOAD_DIR = "/app/uploads"
+# Use /tmp/uploads em ambiente de teste, /app/uploads em produção
+if "pytest" in sys.modules or os.getenv("TESTING") == "1":
+    UPLOAD_DIR = "/tmp/uploads"
+else:
+    UPLOAD_DIR = "/app/uploads"
+    
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 # Rastreador de progresso

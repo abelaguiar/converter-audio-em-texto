@@ -33,13 +33,13 @@ help:
 
 test: install-test
 	@echo "🧪 Rodando testes locais..."
-	pytest tests/test_main.py -v
+	./.venv/bin/pytest tests/test_main.py -v
 
 test-local: test
 
 test-cov: install-test
 	@echo "🧪 Rodando testes com cobertura..."
-	pytest tests/test_main.py \
+	./.venv/bin/pytest tests/test_main.py \
 		--cov=backend \
 		--cov-report=term-missing \
 		--cov-report=html
@@ -47,26 +47,26 @@ test-cov: install-test
 
 test-watch: install-test
 	@echo "🧪 Rodando testes em modo watch..."
-	ptw tests/test_main.py
+	./.venv/bin/ptw tests/test_main.py
 
 test-unit: install-test
 	@echo "🧪 Rodando testes unitários..."
-	pytest tests/test_main.py::TestAudioValidation -v
-	pytest tests/test_main.py::TestAudioConversion -v
-	pytest tests/test_main.py::TestAudioMetadata -v
-	pytest tests/test_main.py::TestErrorHandling -v
+	./.venv/bin/pytest tests/test_main.py::TestAudioValidation -v
+	./.venv/bin/pytest tests/test_main.py::TestAudioConversion -v
+	./.venv/bin/pytest tests/test_main.py::TestAudioMetadata -v
+	./.venv/bin/pytest tests/test_main.py::TestErrorHandling -v
 
 test-api: install-test
 	@echo "🧪 Rodando testes de API..."
-	pytest tests/test_main.py::TestAPIHealth -v
-	pytest tests/test_main.py::TestTranscriptionEndpoint -v
-	pytest tests/test_main.py::TestDownloadEndpoint -v
-	pytest tests/test_main.py::TestProgressTracker -v
+	./.venv/bin/pytest tests/test_main.py::TestAPIHealth -v
+	./.venv/bin/pytest tests/test_main.py::TestTranscriptionEndpoint -v
+	./.venv/bin/pytest tests/test_main.py::TestDownloadEndpoint -v
+	./.venv/bin/pytest tests/test_main.py::TestProgressTracker -v
 
 test-integration: install-test
 	@echo "🧪 Rodando testes de integração..."
-	pytest tests/test_main.py::TestIntegration -v
-	pytest tests/test_main.py::TestConcurrency -v
+	./.venv/bin/pytest tests/test_main.py::TestIntegration -v
+	./.venv/bin/pytest tests/test_main.py::TestConcurrency -v
 
 # ==================
 # TESTES NO DOCKER
@@ -91,17 +91,21 @@ test-docker-watch:
 # INSTALAÇÃO
 # ==================
 
-install:
+install: .venv
 	@echo "📦 Instalando dependências..."
-	pip install -r backend/requirements.txt
+	./.venv/bin/python -m pip install -r backend/requirements.txt
+
+.venv:
+	@echo "🐍 Criando virtual environment..."
+	python3 -m venv .venv
 
 install-test: install
 	@echo "📦 Instalando dependências de teste..."
-	pip install pytest pytest-cov pytest-asyncio httpx pytest-watch
+	./.venv/bin/python -m pip install pytest pytest-cov pytest-asyncio httpx pytest-watch
 
 install-docker:
 	@echo "📦 Instalando dependências no Docker..."
-	docker exec audio-transcriber pip install -r /app/backend/requirements.txt
+	docker exec audio-transcriber python3 -m pip install -r /app/backend/requirements.txt
 
 # ==================
 # DOCKER
@@ -162,17 +166,17 @@ clean-all: clean clean-docker
 
 lint:
 	@echo "🔍 Executando lint..."
-	pip install flake8
+	python3 -m pip install flake8
 	flake8 backend/ --max-line-length=120
 
 format:
 	@echo "🔧 Formatando código..."
-	pip install black
+	python3 -m pip install black
 	black backend/ --line-length=120
 
 type-check:
 	@echo "🔍 Type checking..."
-	pip install mypy
+	python3 -m pip install mypy
 	mypy backend/ --ignore-missing-imports
 
 # ==================
@@ -191,7 +195,7 @@ dev-test: test-cov
 
 ci-test: install-test
 	@echo "🔄 Rodando testes CI/CD..."
-	pytest tests/test_main.py -v --cov=backend --cov-report=xml
+	./.venv/bin/pytest tests/test_main.py -v --cov=backend --cov-report=xml
 
 ci-lint: install-test
 	@echo "🔍 Executando lint CI/CD..."
