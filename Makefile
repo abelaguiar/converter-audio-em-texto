@@ -33,13 +33,13 @@ help:
 
 test: install-test
 	@echo "🧪 Rodando testes locais..."
-	pytest backend/tests/test_main.py -v
+	pytest tests/test_main.py -v
 
 test-local: test
 
 test-cov: install-test
 	@echo "🧪 Rodando testes com cobertura..."
-	pytest backend/tests/test_main.py \
+	pytest tests/test_main.py \
 		--cov=backend \
 		--cov-report=term-missing \
 		--cov-report=html
@@ -47,26 +47,26 @@ test-cov: install-test
 
 test-watch: install-test
 	@echo "🧪 Rodando testes em modo watch..."
-	ptw backend/tests/test_main.py
+	ptw tests/test_main.py
 
 test-unit: install-test
 	@echo "🧪 Rodando testes unitários..."
-	pytest backend/tests/test_main.py::TestAudioValidation -v
-	pytest backend/tests/test_main.py::TestAudioConversion -v
-	pytest backend/tests/test_main.py::TestAudioMetadata -v
-	pytest backend/tests/test_main.py::TestErrorHandling -v
+	pytest tests/test_main.py::TestAudioValidation -v
+	pytest tests/test_main.py::TestAudioConversion -v
+	pytest tests/test_main.py::TestAudioMetadata -v
+	pytest tests/test_main.py::TestErrorHandling -v
 
 test-api: install-test
 	@echo "🧪 Rodando testes de API..."
-	pytest backend/tests/test_main.py::TestAPIHealth -v
-	pytest backend/tests/test_main.py::TestTranscriptionEndpoint -v
-	pytest backend/tests/test_main.py::TestDownloadEndpoint -v
-	pytest backend/tests/test_main.py::TestProgressTracker -v
+	pytest tests/test_main.py::TestAPIHealth -v
+	pytest tests/test_main.py::TestTranscriptionEndpoint -v
+	pytest tests/test_main.py::TestDownloadEndpoint -v
+	pytest tests/test_main.py::TestProgressTracker -v
 
 test-integration: install-test
 	@echo "🧪 Rodando testes de integração..."
-	pytest backend/tests/test_main.py::TestIntegration -v
-	pytest backend/tests/test_main.py::TestConcurrency -v
+	pytest tests/test_main.py::TestIntegration -v
+	pytest tests/test_main.py::TestConcurrency -v
 
 # ==================
 # TESTES NO DOCKER
@@ -74,18 +74,18 @@ test-integration: install-test
 
 test-docker:
 	@echo "🧪 Rodando testes dentro do Docker..."
-	docker exec audio-transcriber pytest backend/tests/test_main.py -v
+	docker exec audio-transcriber pytest tests/test_main.py -v
 
 test-docker-cov:
 	@echo "🧪 Rodando testes com cobertura no Docker..."
-	docker exec audio-transcriber pytest backend/tests/test_main.py \
+	docker exec audio-transcriber pytest tests/test_main.py \
 		--cov=backend \
 		--cov-report=term-missing \
 		--cov-report=html
 
 test-docker-watch:
 	@echo "🧪 Rodando testes em modo watch no Docker..."
-	docker exec -it audio-transcriber ptw backend/tests/test_main.py
+	docker exec -it audio-transcriber ptw tests/test_main.py
 
 # ==================
 # INSTALAÇÃO
@@ -191,7 +191,7 @@ dev-test: test-cov
 
 ci-test: install-test
 	@echo "🔄 Rodando testes CI/CD..."
-	pytest backend/tests/test_main.py -v --cov=backend --cov-report=xml
+	pytest tests/test_main.py -v --cov=backend --cov-report=xml
 
 ci-lint: install-test
 	@echo "🔍 Executando lint CI/CD..."

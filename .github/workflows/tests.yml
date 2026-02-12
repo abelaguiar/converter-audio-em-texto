@@ -36,11 +36,11 @@ jobs:
     
     - name: 🧪 Rodar testes
       run: |
-        pytest backend/test_main.py -v --tb=short
+        pytest tests/test_main.py -v --tb=short
     
     - name: 📊 Gerar cobertura
       run: |
-        pytest backend/test_main.py \
+        pytest tests/test_main.py \
           --cov=backend \
           --cov-report=xml \
           --cov-report=term-missing
